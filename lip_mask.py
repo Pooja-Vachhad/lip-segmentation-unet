@@ -1,5 +1,5 @@
 """
-In this file we apply color on the lips using the predicted mask:
+In this file I apply color on the lips using the predicted mask:
 > run the image through the onnx model to get the lip mask
 > create a solid color layer (same size as image) filled with the chosen lip color
 > blend the original image with the color layer using addWeighted (0.6 original, 0.4 color)
