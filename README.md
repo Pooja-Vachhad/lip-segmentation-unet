@@ -4,8 +4,7 @@ Apply lipstick shades virtually using a UNet segmentation model trained to detec
 
 <img width="990" height="1928" alt="Image" src="https://github.com/user-attachments/assets/a69da4ec-7b3e-4488-aaef-fd15b46c9726" />
 
-**Live Demo:** _link coming soon_
-
+**Live Demo:** [lip-segmentation-unet.streamlit.app](https://lip-segmentation-unet.streamlit.app/)
 ---
 
 ## Project Overview
