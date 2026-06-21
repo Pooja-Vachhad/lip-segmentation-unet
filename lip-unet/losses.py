@@ -1,8 +1,8 @@
 """ 
 losses.py
 
-In this file we make sure that the dice loss is used because for segmentation the majority class pixel 
-is background=0 and foreground=1, so the model doesn't skip the foreground class. We are using dice loss
+In this file I make sure that the dice loss is used because for segmentation the majority class pixel 
+is background=0 and foreground=1, so the model doesn't skip the foreground class. I am using dice loss
 along with binary cross entropy loss to make it much stronger.
 """
 
