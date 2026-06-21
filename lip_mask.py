@@ -62,7 +62,7 @@ axes[1].set_title("predicted mask")
 axes[1].axis("off")
 
 axes[2].imshow(lip_result)
-axes[2].set_title("lip color overlay")  # FIX: was imshow result, not a string title
+axes[2].set_title("lip color overlay")  
 axes[2].axis("off")
 
 plt.tight_layout()
