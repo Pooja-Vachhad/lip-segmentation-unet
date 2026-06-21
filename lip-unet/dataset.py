@@ -5,7 +5,7 @@ This file is responsible for:
 > creating image and mask list while mapping that both should match each other
 > checking that both image and mask count should match
 > applying transformation on both image and mask so that no mismatch occurs
-> customizing the dataset where we load both image and mask, index it, read it and convert into tensor
+> customizing the dataset where I load both image and mask, index it, read it and convert into tensor
 > splitting the image and mask files into train-80%, valid-10%, test-10%
 > packing into DataLoader with batch_size
 """
