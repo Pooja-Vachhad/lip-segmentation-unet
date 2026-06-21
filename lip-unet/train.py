@@ -1,12 +1,12 @@
 """
 train.py
 
-In this file we run the training loop for the model.
-We save the loss and dice score for both train and validation at each epoch.
-To calculate loss we use DiceBCELoss, and for the metric we use calculate_dice_score.
+In this file I run the training loop for the model.
+I save the loss and dice score for both train and validation at each epoch.
+To calculate loss I use DiceBCELoss, and for the metric I use calculate_dice_score.
 If the best validation loss doesn't improve for 7 consecutive epochs, early stopping kicks in
 to save both training time and compute cost.
-We use Adam optimizer as default since it works well with this model and dataset.
+I use Adam optimizer as default since it works well with this model and dataset.
 """
 
 import torch
