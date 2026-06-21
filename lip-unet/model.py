@@ -1,7 +1,7 @@
 """
 model.py 
 
-Here we are using pre-trained weights from resnet18 and fine-tuning to our dataset to learn 
+Here I am using pre-trained weights from resnet18 and fine-tuning to our dataset to learn 
 from our dataset features. 
 Using checkpoint save/load to make sure the best loss is saved 
 and training can resume from where it stopped.
