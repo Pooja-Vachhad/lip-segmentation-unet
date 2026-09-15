@@ -2,10 +2,6 @@
 app.py
 Streamlit lipstick virtual try-on app.
 """
-"""
-app.py
-Streamlit lipstick virtual try-on app.
-"""
 
 import os
 import streamlit as st
@@ -26,7 +22,8 @@ st.markdown("""
 st.markdown('<div class="title">💄 Lip Studio</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Upload · Pick a shade · See the look</div>', unsafe_allow_html=True)
 
-DEFAULT_IMAGE_PATH = "image.jpg"  # sits next to app.py in your repo
+# demo image must sit next to app.py in the repo root
+DEFAULT_IMAGE_PATH = "image.jpg"
 
 # ── shade palette ──
 SHADES = {
@@ -67,11 +64,21 @@ SHADES = {
     },
 }
 
+
 @st.cache_resource
 def load_model():
     return ort.InferenceSession("model.onnx")
 
+
+@st.cache_data(show_spinner=False)
+def load_default_image(path):
+    if os.path.exists(path):
+        return np.array(Image.open(path).convert("RGB"))
+    return None
+
+
 session = load_model()
+
 
 def predict_mask(image_rgb):
     img = cv2.resize(image_rgb, (256, 256))
@@ -84,35 +91,52 @@ def predict_mask(image_rgb):
     pred = (pred > 0.5).astype(np.uint8)
     return pred[0, 0]
 
+
 def apply_lip_color(image_rgb, mask, color, opacity):
     img = cv2.resize(image_rgb, (256, 256))
     color_layer = np.zeros_like(img)
     color_layer[:] = color
     blended = cv2.addWeighted(img, 1 - opacity, color_layer, opacity, 0)
+    # soften edges with blur so color blends more naturally
     mask_blur = cv2.GaussianBlur(mask.astype(np.float32), (7, 7), 0)
     mask_blur = np.stack([mask_blur, mask_blur, mask_blur], axis=-1)
     result = (mask_blur * blended + (1 - mask_blur) * img).astype(np.uint8)
     return result
 
+
 # ── layout: left controls | right image ──
 left, right = st.columns([1, 1])
 
 with left:
-    uploaded = st.file_uploader("Upload a front-facing photo (optional — a demo image is loaded by default)", type=["jpg", "jpeg", "png"])
+    uploaded = st.file_uploader(
+        "Upload a front-facing photo — or just play with the demo photo below",
+        type=["jpg", "jpeg", "png"],
+    )
 
-    # decide which image is "active": user upload wins, else fall back to repo default
-    if uploaded:
-        pil_image = Image.open(uploaded).convert("RGB")
-    elif os.path.exists(DEFAULT_IMAGE_PATH):
-        pil_image = Image.open(DEFAULT_IMAGE_PATH).convert("RGB")
+    # upload wins; otherwise fall back to the bundled demo image
+    if uploaded is not None:
+        image_np = np.array(Image.open(uploaded).convert("RGB"))
+        source_label = "Your photo"
     else:
-        pil_image = None
+        image_np = load_default_image(DEFAULT_IMAGE_PATH)
+        source_label = "Demo photo"
 
-    if pil_image is not None:
+    selected_color = None
+    selected_shade = None
+    opacity = 0.4
+
+    if image_np is not None:
+        st.caption(f"Using: {source_label}")
+
         st.markdown("**Shade Family**")
-        family = st.radio("", list(SHADES.keys()), horizontal=True, label_visibility="collapsed")
+        family = st.radio(
+            "Shade family",
+            list(SHADES.keys()),
+            horizontal=True,
+            label_visibility="collapsed",
+        )
 
-        # reset selected_shade when family changes so no KeyError
+        # reset selected shade whenever the family changes, so no KeyError
         if st.session_state.get("last_family") != family:
             st.session_state["selected_shade"] = list(SHADES[family].keys())[0]
             st.session_state["last_family"] = family
@@ -129,7 +153,7 @@ with left:
                     f'<div style="width:32px;height:32px;border-radius:50%;background:{hex_color};'
                     f'margin:auto;border:2px solid #555;"></div>'
                     f'<div style="text-align:center;font-size:0.65rem;color:#ccc;margin-top:3px;">{name}</div>',
-                    unsafe_allow_html=True
+                    unsafe_allow_html=True,
                 )
                 if st.button("✓", key=f"btn_{family}_{name}"):
                     st.session_state["selected_shade"] = name
@@ -142,25 +166,30 @@ with left:
         st.markdown(
             f'<div style="margin-top:8px;">Selected: <span style="background:{hex_sel};'
             f'padding:2px 10px;border-radius:10px;color:white;font-size:0.85rem;">{selected_shade}</span></div>',
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
         opacity = st.slider("Opacity", 0.1, 0.9, 0.4, 0.05)
     else:
-        st.warning(f"No image uploaded and default '{DEFAULT_IMAGE_PATH}' not found in the app folder.")
+        st.error(
+            f"No photo uploaded and '{DEFAULT_IMAGE_PATH}' was not found next to app.py. "
+            "Commit the demo image to the repo root or upload a photo."
+        )
 
 with right:
-    if pil_image is not None:
-        image_np = np.array(pil_image)
-
+    if image_np is not None and selected_color is not None:
         with st.spinner("Applying..."):
             mask = predict_mask(image_np)
             result = apply_lip_color(image_np, mask, selected_color, opacity)
 
         r1, r2 = st.columns(2)
         with r1:
-            st.image(cv2.resize(image_np, (256, 256)), caption="Original", use_column_width=True)
+            st.image(
+                cv2.resize(image_np, (256, 256)),
+                caption="Original",
+                use_container_width=True,
+            )
         with r2:
-            st.image(result, caption=selected_shade, use_column_width=True)
+            st.image(result, caption=selected_shade, use_container_width=True)
     else:
         st.info("Upload a photo on the left to get started.")
