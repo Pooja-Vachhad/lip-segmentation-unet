@@ -1,5 +1,7 @@
 # Lip Segmentation & Virtual Try-On
 
+https://github.com/user-attachments/assets/64edb188-de14-4a0e-89a1-8443f1dec638
+
 Apply lipstick shades virtually using a UNet segmentation model trained to detect lip regions with **98.12% Dice Score**.
 
 <img width="990" height="1928" alt="Image" src="https://github.com/user-attachments/assets/a69da4ec-7b3e-4488-aaef-fd15b46c9726" />
