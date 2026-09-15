@@ -2,7 +2,12 @@
 app.py
 Streamlit lipstick virtual try-on app.
 """
+"""
+app.py
+Streamlit lipstick virtual try-on app.
+"""
 
+import os
 import streamlit as st
 import onnxruntime as ort
 import numpy as np
@@ -20,6 +25,8 @@ st.markdown("""
 
 st.markdown('<div class="title">💄 Lip Studio</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Upload · Pick a shade · See the look</div>', unsafe_allow_html=True)
+
+DEFAULT_IMAGE_PATH = "image.jpg"  # sits next to app.py in your repo
 
 # ── shade palette ──
 SHADES = {
@@ -82,7 +89,6 @@ def apply_lip_color(image_rgb, mask, color, opacity):
     color_layer = np.zeros_like(img)
     color_layer[:] = color
     blended = cv2.addWeighted(img, 1 - opacity, color_layer, opacity, 0)
-    # soften edges with blur so color blends more naturally
     mask_blur = cv2.GaussianBlur(mask.astype(np.float32), (7, 7), 0)
     mask_blur = np.stack([mask_blur, mask_blur, mask_blur], axis=-1)
     result = (mask_blur * blended + (1 - mask_blur) * img).astype(np.uint8)
@@ -92,13 +98,21 @@ def apply_lip_color(image_rgb, mask, color, opacity):
 left, right = st.columns([1, 1])
 
 with left:
-    uploaded = st.file_uploader("Upload a front-facing photo", type=["jpg", "jpeg", "png"])
+    uploaded = st.file_uploader("Upload a front-facing photo (optional — a demo image is loaded by default)", type=["jpg", "jpeg", "png"])
 
+    # decide which image is "active": user upload wins, else fall back to repo default
     if uploaded:
+        pil_image = Image.open(uploaded).convert("RGB")
+    elif os.path.exists(DEFAULT_IMAGE_PATH):
+        pil_image = Image.open(DEFAULT_IMAGE_PATH).convert("RGB")
+    else:
+        pil_image = None
+
+    if pil_image is not None:
         st.markdown("**Shade Family**")
         family = st.radio("", list(SHADES.keys()), horizontal=True, label_visibility="collapsed")
 
-        # FIX: reset selected_shade when family changes so no KeyError
+        # reset selected_shade when family changes so no KeyError
         if st.session_state.get("last_family") != family:
             st.session_state["selected_shade"] = list(SHADES[family].keys())[0]
             st.session_state["last_family"] = family
@@ -132,17 +146,17 @@ with left:
         )
 
         opacity = st.slider("Opacity", 0.1, 0.9, 0.4, 0.05)
+    else:
+        st.warning(f"No image uploaded and default '{DEFAULT_IMAGE_PATH}' not found in the app folder.")
 
 with right:
-    if uploaded:
-        pil_image = Image.open(uploaded).convert("RGB")
+    if pil_image is not None:
         image_np = np.array(pil_image)
 
         with st.spinner("Applying..."):
             mask = predict_mask(image_np)
             result = apply_lip_color(image_np, mask, selected_color, opacity)
 
-        # small side by side inside right column
         r1, r2 = st.columns(2)
         with r1:
             st.image(cv2.resize(image_np, (256, 256)), caption="Original", use_column_width=True)
